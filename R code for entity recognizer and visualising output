@@ -1,0 +1,66 @@
+require(rJava)
+library(rJava)
+library(NLP)
+library(openNLP)
+
+library(magrittr)
+text<-readLines( "C:/Users/Admin/Desktop/ANALYTICS/news.txt")
+text
+dhead(text)
+View(text)
+print(text)
+text=as.String(text)
+sent_token_anno<-Maxent_Sent_Token_Annotator()
+word_token_anno<-Maxent_Word_Token_Annotator()
+pos_tag_annor<-Maxent_POS_Tag_Annotator()
+pos_annotations<-annotate(text,list(sent_token_anno,word_token_anno,pos_tag_annor))
+text_annotations<-annotate(text,list(sent_token_anno,word_token_anno))
+head(text_annotations)
+text_doc<-AnnotatedPlainTextDocument(text,text_annotations)
+words(text_doc)%>%head(10)
+person_ann<-Maxent_Entity_Annotator(kind = "person")
+install.packages("openNLPmodels.en", repos = "http://datacube.wu.ac.at")
+location_ann<-Maxent_Entity_Annotator(kind = "location")
+organization_ann<-Maxent_Entity_Annotator(kind = "organization")
+date_ann<-Maxent_Entity_Annotator(kind = "date")
+pipeline<-list(sent_token_anno,word_token_anno,person_ann,location_ann,organization_ann,date_ann)
+text_annotations<-annotate(text,pipeline)
+text_doc<-AnnotatedPlainTextDocument(text,text_annotations)
+
+entities<-function(doc,kind){
+  s<-doc$content
+  a<-annotations(doc)[[1]]
+  if(hasArg(kind)){
+    k<-sapply(a$features,'[[',"kind")
+    s[a[k==kind]]
+  }else{
+    s[a[a$type=="entity"]]
+  }
+}
+entities(text_doc,kind="person")
+entities(text_doc,kind="location")
+plot(table(entities(text_doc,kind="organization")))
+entities(text_doc,kind="date")
+
+library(googleVis)
+dfp<-data.frame(table(entities(text_doc
+                               ,kind="person")))
+Barp<-gvisColumnChart(dfp)
+plot(Barp)
+
+dfl<-data.frame(table(entities(text_doc
+                               ,kind="location")))
+Barl<-gvisColumnChart(dfl)
+plot(Barl)
+
+dfo<-data.frame(table(entities(text_doc
+                               ,kind="organization")))
+Baro<-gvisColumnChart(dfo)
+plot(Baro)
+
+dfd<-data.frame(table(entities(text_doc
+                               ,kind="date")))
+Barl<-gvisColumnChart(dfd)
+plot(Bard)
+
+
